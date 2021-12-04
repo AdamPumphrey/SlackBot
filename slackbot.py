@@ -4,6 +4,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask, request, Response
 from slackeventsapi import SlackEventAdapter
+from random import randrange
 
 # based off of https://www.youtube.com/playlist?list=PLzMcBGfZo4-kqyzTzJWCV6lyK-ZMYECDc
 
@@ -16,7 +17,7 @@ slack_event_adapter = SlackEventAdapter(os.environ['SIGNING_SECRET'],'/slack/eve
 client = slack.WebClient(token=os.environ['SLACK_TOKEN'])
 BOT_ID = client.api_call("auth.test")['user_id']
 TRIAGE_ID = "C02NT3DTRF1"
-CHANNELS = {TRIAGE_ID}
+CHANNELS = [TRIAGE_ID]
 
 message_counts = {}
 welcome_messages = {}
@@ -41,7 +42,6 @@ class WelcomeMessage:
     def __init__(self, channel, user):
         self.channel = channel
         self.user = user
-        self.icon_emoji = ':robot_face:'
         self.timestamp = ''
         self.completed = False
 
@@ -49,8 +49,6 @@ class WelcomeMessage:
         return {
             'ts': self.timestamp,
             'channel': self.channel,
-            'username': 'Welcome Robot!',
-            'icon_emoji': self.icon_emoji,
             'blocks': [
                 self.START_TEXT,
                 self.DIVIDER,
@@ -81,6 +79,7 @@ def send_welcome_message(channel, user):
 
 @slack_event_adapter.on('message')
 def message(payload):
+    print(payload)
     event= payload.get('event', {})
     channel_id = event.get('channel')
     # print(channel_id)
@@ -115,7 +114,6 @@ def reaction(payload):
     welcome.timestamp = updated_message['ts']
 
 
-
 @app.route('/ticket-count', methods=['POST'])
 def ticket_count():
     data = request.form
@@ -123,6 +121,18 @@ def ticket_count():
     user_id = data.get('user_id')
     ticket_count = message_counts.get(user_id, 0)
     client.chat_postMessage(channel=channel_id, text=f"Message: {ticket_count}")
+    return Response(), 200
+
+@app.route('/create-ticket', methods=['POST'])
+def create_ticket():
+    data = request.form
+    print(data)
+    user_name = data.get('user_name')
+    channel_id = data.get('channel_id')
+    text = data.get('text')
+    ticket_id = randrange(1000, 10000)
+    client.chat_postMessage(channel=CHANNELS[0], text=f'Ticket #{ticket_id}:\n\nUser: {user_name}\n\nDescription: {text}\n\nStatus: Unassigned')
+    client.chat_postMessage(channel=channel_id, text=f'Your ticket #{ticket_id} has been generated.\n\nDescription: {text}\n\nStatus: Unassigned')
     return Response(), 200
 
 if __name__ == "__main__":
