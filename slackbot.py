@@ -20,7 +20,7 @@ BOT_ID = client.api_call("auth.test")['user_id']
 TRIAGE_ID = "C02NT3DTRF1"
 CHANNELS = [TRIAGE_ID]
 
-message_counts = {}
+# message_counts = {}
 tickets = {}
 
 # test to see if bot connects to channel
@@ -131,14 +131,14 @@ def reaction(payload):
         return
 
 
-@app.route('/ticket-count', methods=['POST'])
-def ticket_count():
-    data = request.form
-    channel_id = data.get('channel_id')
-    user_id = data.get('user_id')
-    ticket_count = message_counts.get(user_id, 0)
-    client.chat_postMessage(channel=channel_id, text=f"Message: {ticket_count}")
-    return Response(), 200
+# @app.route('/ticket-count', methods=['POST'])
+# def ticket_count():
+#     data = request.form
+#     channel_id = data.get('channel_id')
+#     user_id = data.get('user_id')
+#     ticket_count = message_counts.get(user_id, 0)
+#     client.chat_postMessage(channel=channel_id, text=f"Message: {ticket_count}")
+#     return Response(), 200
 
 @app.route('/create-ticket', methods=['POST'])
 def generate_ticket():
@@ -152,10 +152,34 @@ def generate_ticket():
         ticket_id = randrange(1000, 10000)
     create_ticket(user_id, user_name, text, ticket_id)
     #client.chat_postMessage(channel=CHANNELS[0], text=f'Ticket #{ticket_id}:\n\nUser: {user_name}\n\nDescription: {text}\n\nStatus: Unassigned')
-    client.chat_postMessage(channel=channel_id, text=f'Your ticket #{ticket_id} has been generated.\n\nDescription: {text}\n\nStatus: Unassigned\n\nCheck the status of your ticket with the /ticket-status command.')
+    client.chat_postMessage(channel=channel_id, text=f'Your ticket #{ticket_id} has been generated.\n\nDescription: {text}\n\nStatus: Unassigned\n\nCheck the status of your ticket with the /ticket-update command.')
     return Response(), 200
 
-# ticket-status command goes here
+@app.route('/ticket-update', methods=['POST'])
+def ticket_update():
+    data = request.form
+    channel_id = data.get('channel_id')
+    ticket_id = int(data.get('text'))
+    user_ticket = tickets[ticket_id]
+    user_ticket_copy = copy.deepcopy(user_ticket)
+    user_ticket_copy.channel = channel_id
+    user_message = user_ticket_copy.get_message(1)
+    client.chat_postMessage(**user_message)
+    return Response(), 200
+
+@app.route('/help', methods=['POST'])
+def help():
+    data = request.form
+    channel_id = data.get('channel_id')
+    ret_string = 'ServiceDesk Application Commands\n\n/create-ticket [issue]:\nThis command creates a ticket with the provided issue.\nServiceDesk will provide you with a copy of the created ticket, including the ticket ID number, which can be used to obtain status updates for the ticket.\nExample: /create-ticket My computer is not working.\n\n/ticket-update [ticket-id]:\nThis command provides a status update for the specified ticket.\nExample: /ticket-update 1234'
+    formatted = {'type': 'section', 'text': {'type': 'mrkdwn', 'text': ret_string}}
+    message = {
+        'ts': '',
+        'channel': channel_id,
+        'blocks': [formatted]
+    }
+    client.chat_postMessage(**message)
+    return Response(), 200
 
 if __name__ == "__main__":
     app.run(debug=True)
