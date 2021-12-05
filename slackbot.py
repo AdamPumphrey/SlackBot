@@ -1,5 +1,6 @@
 import slack
 import os
+import copy
 from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask, request, Response
@@ -47,29 +48,29 @@ class Ticket:
         self.ticket_id = ticket_id
         self.text = text
 
-    def get_message(self):
-        return {
+    def get_message(self, mode=0):
+        ret_dict = {
             'ts': self.timestamp,
-            'channel': self.channel,
-            'blocks': [
-                #self.START_TEXT,
-                #self.DIVIDER,
-                self._get_ticket() 
-            ]
+            'channel': self.channel
         }
+        if mode:
+            ret_dict['blocks'] = [self._get_ticket_update()]
+        else:
+            ret_dict['blocks'] = [self._get_ticket()]
+        return ret_dict
 
     def _get_ticket(self):
         #checkmark = ':white_check_mark:'
         #if not self.completed:
         #    checkmark = ':white_large_square:'
-        
+
         ticket_info=f'Ticket #{self.ticket_id}:\n\nUser: {self.user_name}\n\nDescription: {self.text}\n\nStatus: {self.status}'
         #channel=CHANNELS[0], text=f'Ticket #{ticket_id}:\n\nUser: {user_name}\n\nDescription: {text}\n\nStatus: Unassigned'
 
         return {'type': 'section', 'text': {'type': 'mrkdwn', 'text': ticket_info}}
     
     def _get_ticket_update(self):
-        ticket_info=f'Status for Ticket #{self.ticket_id}: {self.status}'
+        ticket_info=f'Status update for Ticket #{self.ticket_id}:\n\nStatus: {self.status}'
 
         return {'type': 'section', 'text': {'type': 'mrkdwn', 'text': ticket_info}}
 
@@ -79,22 +80,26 @@ def create_ticket(user, user_name, text, ticket_id):
     response = client.chat_postMessage(**message)
     ticket.timestamp = response['ts']
 
-    if user not in tickets:
-        tickets[user] = {}
-        tickets[user][ticket_id] = ticket
-    else:
-        tickets[user][ticket_id] = ticket
+    # ticket id should be unique
+    print(type(ticket_id))
+    tickets[ticket_id] = ticket
+
+def update_ticket(tid, new_info):
+    ticket = tickets[tid]
+    ticket.status = new_info
+    tickets[tid] = ticket
+    return ticket
 
 # event on team join send welcome message
 
 @slack_event_adapter.on('message')
 def message(payload):
-    print(payload)
+    #print(payload)
     event= payload.get('event', {})
     channel_id = event.get('channel')
     user_id = event.get('user')
     text = event.get('text')
-    print(text)
+    #print(text)
 
     if user_id != None and BOT_ID != user_id:
         # if user_id in message_counts and channel_id in CHANNELS:
@@ -109,12 +114,29 @@ def message(payload):
 
 @slack_event_adapter.on('reaction_added')
 def reaction(payload):
-    print(payload)
     event= payload.get('event', {})
     channel_id = event.get('item', {}).get('channel')
-    user_id = event.get('user')
+    ts = event.get('item', {}).get('ts')
 
     if channel_id in CHANNELS:
+        old_message = client.conversations_history(channel=channel_id, inclusive=True, oldest=ts, latest=ts)
+        message_text = old_message['messages'][0]['blocks'][0]['text']['text']
+        reaction = old_message['messages'][0]['reactions'][0]['name']
+        temp = message_text.rsplit(':', 1)
+        tid = int(temp[0].split(':', 1)[0].split('#')[1])
+        if reaction == 'eyes':
+            temp[1] = 'In progress'
+        elif reaction == 'white_check_mark':
+            temp[1] = 'Completed'
+        updated_ticket = update_ticket(tid, temp[1])
+        updated_message = updated_ticket.get_message()
+        response = client.chat_update(**updated_message, as_user=True)
+        updated_ticket.timestamp = response['ts']
+        tickets[tid] = updated_ticket
+        user_ticket = copy.deepcopy(updated_ticket)
+        user_ticket.channel = user_ticket.user
+        user_message = user_ticket.get_message(1)
+        client.chat_postMessage(**user_message)
         return
         # welcome = welcome_messages[f'@{user_id}'][user_id]
         # welcome.completed = True
@@ -141,7 +163,7 @@ def generate_ticket():
     channel_id = data.get('channel_id')
     text = data.get('text')
     ticket_id = randrange(1000, 10000)
-    while ticket_id in used_ticket_ids:
+    while ticket_id in tickets:
         ticket_id = randrange(1000, 10000)
     create_ticket(user_id, user_name, text, ticket_id)
     #client.chat_postMessage(channel=CHANNELS[0], text=f'Ticket #{ticket_id}:\n\nUser: {user_name}\n\nDescription: {text}\n\nStatus: Unassigned')
