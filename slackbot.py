@@ -22,7 +22,6 @@ CHANNELS = [TRIAGE_ID]
 
 message_counts = {}
 tickets = {}
-used_ticket_ids = []
 
 # test to see if bot connects to channel
 #client.chat_postMessage(channel='#triage-servicedesk', text='Test message')
@@ -60,9 +59,6 @@ class Ticket:
         return ret_dict
 
     def _get_ticket(self):
-        #checkmark = ':white_check_mark:'
-        #if not self.completed:
-        #    checkmark = ':white_large_square:'
 
         ticket_info=f'Ticket #{self.ticket_id}:\n\nUser: {self.user_name}\n\nDescription: {self.text}\n\nStatus: {self.status}'
         #channel=CHANNELS[0], text=f'Ticket #{ticket_id}:\n\nUser: {user_name}\n\nDescription: {text}\n\nStatus: Unassigned'
@@ -81,7 +77,6 @@ def create_ticket(user, user_name, text, ticket_id):
     ticket.timestamp = response['ts']
 
     # ticket id should be unique
-    print(type(ticket_id))
     tickets[ticket_id] = ticket
 
 def update_ticket(tid, new_info):
@@ -90,16 +85,12 @@ def update_ticket(tid, new_info):
     tickets[tid] = ticket
     return ticket
 
-# event on team join send welcome message
-
 @slack_event_adapter.on('message')
 def message(payload):
-    #print(payload)
     event= payload.get('event', {})
     channel_id = event.get('channel')
     user_id = event.get('user')
     text = event.get('text')
-    #print(text)
 
     if user_id != None and BOT_ID != user_id:
         # if user_id in message_counts and channel_id in CHANNELS:
@@ -138,12 +129,6 @@ def reaction(payload):
         user_message = user_ticket.get_message(1)
         client.chat_postMessage(**user_message)
         return
-        # welcome = welcome_messages[f'@{user_id}'][user_id]
-        # welcome.completed = True
-        # welcome.channel = channel_id
-        # message = welcome.get_message()
-        # updated_message = client.chat_update(**message)
-        # welcome.timestamp = updated_message['ts']
 
 
 @app.route('/ticket-count', methods=['POST'])
