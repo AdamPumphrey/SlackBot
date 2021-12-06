@@ -15,16 +15,16 @@ Required packages:
 * flask
 * slackeventsapi
 
-This app is meant to run on a public web server in order to send and receive requests from the Slack api.
+This app is meant to run on a public web server in order to send and receive requests from the Slack API.
 
 The enviroment variables are the Slack application's auth token and signing secret.
 
-More info regarding the Slack api can be found [here](https://api.slack.com/).
+More info regarding the Slack API can be found [here](https://api.slack.com/).
 
 Development and testing was done on an Ubuntu server which used [ngrok](https://ngrok.com/) for a public URL.
 
 ## Purpose
-This application is a very basic implementation of a rudimentary IT ticketing system. The idea is to automate the triaging process to help Tier I IT teams be more efficient.
+This application is a very basic implementation of a rudimentary IT ticketing system, built as part of a school project. The idea is to automate the triaging process to help Tier I IT teams be more efficient.
 
 In addition to the application, a triage channel should also be present in the Slack workspace. The application needs to be added to the triage channel, whose channel ID is specified by TRIAGE_ID on line 23.
 
