@@ -33,6 +33,8 @@ The application has three commands:
 * /ticket-update [ticket-id]
 * /help
 
+<img src="https://camo.githubusercontent.com/477a50b650151415bd099eabe8b47de5cd8e645892a1417a510e2092bc64a01f/68747470733a2f2f692e696d6775722e636f6d2f50386b645135572e706e67" alt="SlackBot commands" data-canonical-src="https://i.imgur.com/P8kdQ5W.png" width=600 height=600>
+
 All three commands are intended to be used in private messages (DMs) with the application.
 
 /create-ticket takes in a string as input and generates a ticket. The ticket is then posted to the triage channel in Slack, and a copy is sent back to the user via DM.
