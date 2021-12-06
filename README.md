@@ -46,3 +46,9 @@ Example usage: /create-ticket Help my computer is not working!
 Example usage: /ticket-update 4928
 
 /help sends the user information regarding the commands handled by the application.
+
+The application uses reactions on messages to update the status of a ticket. If a technician reacts to the ticket message with the 'eyes' emoji, the status is changed to "In progress", because the tech is "taking a look" at the ticket. Similarly, if the eyes reaction is removed and a checkmark reaction is added, the status is changed to "Completed".
+
+Video demo below:
+
+[![Video Demo](https://img.youtube.com/vi/wkeUGJKRiuw/maxresdefault.jpg)](https://www.youtube.com/watch?v=wkeUGJKRiuw)
