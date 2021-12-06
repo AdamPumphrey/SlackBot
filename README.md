@@ -33,7 +33,7 @@ The application has three commands:
 * /ticket-update [ticket-id]
 * /help
 
-<img src="https://camo.githubusercontent.com/477a50b650151415bd099eabe8b47de5cd8e645892a1417a510e2092bc64a01f/68747470733a2f2f692e696d6775722e636f6d2f50386b645135572e706e67" alt="SlackBot commands" data-canonical-src="https://i.imgur.com/P8kdQ5W.png" width=600 height=600>
+<img src="https://camo.githubusercontent.com/39f71f393cb0005ec7070eb417ddccf800de82c29dbb351e9b1463bc7c446b67/68747470733a2f2f692e696d6775722e636f6d2f555638376d52362e706e67" alt="test" data-canonical-src="https://i.imgur.com/UV87mR6.png" width=800 height=600>
 
 All three commands are intended to be used in private messages (DMs) with the application.
 
